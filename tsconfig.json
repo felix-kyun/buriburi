@@ -21,6 +21,7 @@
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["src/*"],
+			"@fetch/*": ["src/subcommands/fetch/*"],
 		},
 	},
 }

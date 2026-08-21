@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
-import type { Episode, Nullable } from "@/types";
+import type { Episode } from "@/types/Episode";
+import type { Nullable } from "@/types/Nullable";
 
 export async function extractContinuationToken(
 	pageContent: string,

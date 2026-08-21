@@ -213,6 +213,9 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.9
