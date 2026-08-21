@@ -1,0 +1,36 @@
+{
+	"name": "buriburi",
+	"version": "0.0.1",
+	"description": "",
+	"main": "src/index.ts",
+	"scripts": {
+		"dev": "tsx watch .",
+		"build": "tsup",
+		"typecheck": "tsc --noEmit"
+	},
+	"bin": {
+		"buriburi": "dist/index.js"
+	},
+	"keywords": [],
+	"author": "felix-kyun",
+	"license": "ISC",
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "^11.3.0",
+			"onFail": "download"
+		}
+	},
+	"type": "module",
+	"dependencies": {
+		"cheerio": "^1.2.0",
+		"commander": "^15.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.9",
+		"@types/node": "^26.2.0",
+		"tsup": "^8.5.1",
+		"tsx": "^4.23.12",
+		"typescript": "^7.0.2"
+	}
+}
