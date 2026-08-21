@@ -8,13 +8,18 @@
 
 import { Command } from "commander";
 import { registerFetch } from "@/subcommands/fetch";
+import packageJson from "@/../package.json" with { type: "json" };
 
 const program = new Command();
 const commands: Array<(program: Command) => void> = [registerFetch];
 
 program.name("buriburi");
 program.description("");
-program.version("0.0.2", "-v, --version", "Print the version number");
+program.version(
+	packageJson.version,
+	"-v, --version",
+	"Print the version number",
+);
 
 commands.forEach((register) => register(program));
 
