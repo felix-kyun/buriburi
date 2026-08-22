@@ -20,10 +20,6 @@ class Config {
 		this.loadEpisodes();
 	}
 
-	public getEpisodes(): Array<Episode> {
-		return [];
-	}
-
 	private getConfigDirectory(): string {
 		switch (process.platform) {
 			case "win32":
@@ -45,6 +41,10 @@ class Config {
 
 	private getEpisodeRegistry() {
 		return join(this.getConfigDirectory(), "episodes.json");
+	}
+
+	public getEpisodes(): Array<Episode> {
+		return this.episodes;
 	}
 
 	private loadEpisodes(): void {
