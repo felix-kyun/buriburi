@@ -3,6 +3,7 @@ import { sources } from "@update/sources";
 import type { Command } from "commander";
 import { logger } from "@/logger";
 import type { Episode } from "@/types/Episode";
+import { config } from "@/config";
 
 /*
  * buriburi fetch
@@ -13,15 +14,21 @@ const log = logger.withTag("fetch");
 async function updateCommand() {
 	const episodes: Array<Episode> = [];
 
-	await Promise.all(
-		sources.map(async (source) => {
-			log.debug(`loading source "${source.name}"`);
-			const results = await providers[source.provider](source.data);
-			episodes.push(...results);
-		}),
-	);
+	log.start("Updating Registry");
+	try {
+		await Promise.all(
+			sources.map(async (source) => {
+				log.debug(`loading source "${source.name}"`);
+				const results = await providers[source.provider](source.data);
+				episodes.push(...results);
+			}),
+		);
 
-	log.info(`loaded ${episodes.length} episodes`);
+		config.setEpisodes(episodes);
+		log.success(`Saved ${episodes.length} episodes`);
+	} catch (error) {
+		log.fatal(error);
+	}
 }
 
 export function registerUpdate(program: Command) {
