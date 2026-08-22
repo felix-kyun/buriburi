@@ -1,5 +1,5 @@
-import { providers } from "@update/providers";
-import { sources } from "@update/sources";
+import { providers } from "@cmd/update/providers";
+import { sources } from "@cmd/update/sources";
 import type { Command } from "commander";
 import { config } from "@/config";
 import { logger } from "@/logger";

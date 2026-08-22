@@ -6,10 +6,10 @@
  * Copyright (c) 2026 Praise Jacob
  */
 
+import { registerInfo } from "@cmd/info";
+import { registerUpdate } from "@cmd/update";
 import { Command } from "commander";
 import packageJson from "@/../package.json" with { type: "json" };
-import { registerInfo } from "@/subcommands/info";
-import { registerUpdate } from "@/subcommands/update";
 
 const program = new Command();
 const commands: Array<(program: Command) => void> = [
