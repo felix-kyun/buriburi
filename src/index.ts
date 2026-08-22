@@ -25,6 +25,8 @@ program.version(
 	"Print the version number",
 );
 
-commands.forEach((register) => register(program));
+commands.forEach((register) => {
+	register(program);
+});
 
 await program.parseAsync();
