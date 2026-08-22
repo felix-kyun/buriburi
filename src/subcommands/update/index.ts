@@ -1,9 +1,9 @@
 import { providers } from "@update/providers";
 import { sources } from "@update/sources";
 import type { Command } from "commander";
+import { config } from "@/config";
 import { logger } from "@/logger";
 import type { Episode } from "@/types/Episode";
-import { config } from "@/config";
 
 /*
  * buriburi fetch

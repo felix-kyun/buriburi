@@ -1,8 +1,8 @@
-import type { Episode } from "@/types/Episode";
-import { join } from "path";
-import { homedir } from "os";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { logger } from "@/logger";
+import type { Episode } from "@/types/Episode";
 
 const appName = "buriburi";
 const log = logger.withTag("config");
@@ -31,8 +31,7 @@ class Config {
 				return join(homedir(), "Library", "Preferences", appName);
 			case "linux":
 				return join(
-					process.env.XDG_CONFIG_HOME ||
-						join(homedir(), ".config", appName),
+					process.env.XDG_CONFIG_HOME || join(homedir(), ".config", appName),
 				);
 			default:
 				return join(homedir(), appName);

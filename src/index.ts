@@ -7,11 +7,15 @@
  */
 
 import { Command } from "commander";
-import { registerFetch } from "@/subcommands/fetch";
 import packageJson from "@/../package.json" with { type: "json" };
+import { registerInfo } from "@/subcommands/info";
+import { registerUpdate } from "@/subcommands/update";
 
 const program = new Command();
-const commands: Array<(program: Command) => void> = [registerFetch];
+const commands: Array<(program: Command) => void> = [
+	registerUpdate,
+	registerInfo,
+];
 
 program.name("buriburi");
 program.description("");
