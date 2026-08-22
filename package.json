@@ -6,7 +6,10 @@
 	"scripts": {
 		"dev": "tsx watch .",
 		"build": "tsup",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"check": "biome check --write .",
+		"lint": "biome lint --write .",
+		"format": "biome format --write ."
 	},
 	"bin": {
 		"buriburi": "dist/index.js"
