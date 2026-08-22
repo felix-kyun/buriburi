@@ -7,9 +7,9 @@
 		"dev": "tsx watch .",
 		"build": "tsup",
 		"typecheck": "tsc --noEmit",
-		"check": "biome check --write .",
-		"lint": "biome lint --write .",
-		"format": "biome format --write ."
+		"check": "biome check --write --no-errors-on-unmatched",
+		"lint": "biome lint --write --no-errors-on-unmatched",
+		"format": "biome format --write"
 	},
 	"bin": {
 		"buriburi": "dist/index.js"
