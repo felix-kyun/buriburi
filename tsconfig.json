@@ -18,10 +18,10 @@
 		"noUncheckedSideEffectImports": true,
 		"allowImportingTsExtensions": true,
 
-		"baseUrl": ".",
 		"paths": {
-			"@/*": ["src/*"],
-			"@cmd/*": ["src/subcommands/*"]
-		}
-	}
+			"*": ["./*"],
+			"@/*": ["./src/*"],
+			"@cmd/*": ["./src/subcommands/*"],
+		},
+	},
 }
