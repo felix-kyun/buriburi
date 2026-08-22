@@ -1,12 +1,12 @@
 import { logger } from "@/logger";
 import type { Episode } from "@/types/Episode";
 import type { Nullable } from "@/types/Nullable";
-import { decode } from "@fetch/providers/helpers";
+import { decode } from "@update/providers/helpers";
 import {
 	extractContinuationToken,
 	extractEpisodes,
 	fetchNextPage,
-} from "@fetch/providers/Odnoklassniki/helpers";
+} from "@update/providers/Odnoklassniki/helpers";
 
 const log = logger.withTag("provider/Odnoklasssniki");
 

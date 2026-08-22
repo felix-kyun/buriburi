@@ -1,4 +1,4 @@
-import { Odnoklassniki } from "@fetch/providers/Odnoklassniki";
+import { Odnoklassniki } from "@update/providers/Odnoklassniki";
 import type { Episode } from "@/types/Episode";
 import type { Providers } from "@/types/Providers";
 
