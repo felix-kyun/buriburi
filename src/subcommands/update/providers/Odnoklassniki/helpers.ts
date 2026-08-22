@@ -34,13 +34,12 @@ export async function extractEpisodes(pageContent: string): Promise<Episode[]> {
 			$(el).parent().parent().find("a.video-card_n").attr("title") ??
 			"";
 
-		const preview = $(el).children("img").attr("src") ?? "";
+		// const preview = $(el).children("img").attr("src") ?? "";
 
 		episodes.push({
 			title,
 			duration,
 			id,
-			preview,
 		});
 	});
 
