@@ -19,9 +19,8 @@
 		"allowImportingTsExtensions": true,
 
 		"paths": {
-			"*": ["./*"],
-			"@/*": ["./src/*"],
 			"@cmd/*": ["./src/subcommands/*"],
+			"@/*": ["./src/*"],
 		},
 	},
 }
