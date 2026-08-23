@@ -3,17 +3,18 @@ import {
 	extractContinuationToken,
 	extractEpisodes,
 	fetchNextPage,
+	normalizeEpisodes,
 } from "@cmd/update/providers/Odnoklassniki/helpers";
+import type { ScrapedEpisode } from "@cmd/update/providers/Odnoklassniki/types";
 import { logger } from "@/logger";
 import type { Episode } from "@/types/Episode";
 import type { Nullable } from "@/types/Nullable";
 
-const log = logger.withTag("provider/Odnoklasssniki");
-
 export async function Odnoklassniki(data: string): Promise<Array<Episode>> {
-	const episodes: Array<Episode> = [];
-
 	const id = decode(data);
+	const log = logger.withTag(`provider/Odnoklasssniki/${id}`);
+	const scrapedEpisodes: Array<ScrapedEpisode> = [];
+
 	const baseUrl = `${decode("aHR0cHM6Ly9vay5ydS92aWRlbw==")}/${id}`;
 
 	const playlistPage = await fetch(baseUrl);
@@ -21,13 +22,17 @@ export async function Odnoklassniki(data: string): Promise<Array<Episode>> {
 	let continuationToken: Nullable<string>;
 
 	do {
-		episodes.push(...(await extractEpisodes(pageContent)));
+		const extracted = await extractEpisodes(pageContent);
+		scrapedEpisodes.push(...extracted);
 
 		continuationToken = await extractContinuationToken(pageContent);
 		pageContent = await fetchNextPage(baseUrl, continuationToken as string);
 	} while (continuationToken);
 
-	log.withTag(id).debug(`fetched ${episodes.length} episodes`);
+	log.debug(`Scraped ${scrapedEpisodes.length} entries`);
 
-	return episodes;
+	const normalizedEpisodes = normalizeEpisodes(scrapedEpisodes);
+	log.debug(`Found ${normalizedEpisodes.length} episodes`);
+
+	return normalizedEpisodes;
 }

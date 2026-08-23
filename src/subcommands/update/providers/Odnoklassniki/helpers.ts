@@ -1,3 +1,4 @@
+import type { ScrapedEpisode } from "@cmd/update/providers/Odnoklassniki/types";
 import * as cheerio from "cheerio";
 import type { Episode } from "@/types/Episode";
 import type { Nullable } from "@/types/Nullable";
@@ -14,9 +15,11 @@ export async function extractContinuationToken(
 	return continuationToken ?? null;
 }
 
-export async function extractEpisodes(pageContent: string): Promise<Episode[]> {
+export async function extractEpisodes(
+	pageContent: string,
+): Promise<Array<ScrapedEpisode>> {
 	const $ = cheerio.load(pageContent);
-	const episodes: Episode[] = [];
+	const episodes: Array<ScrapedEpisode> = [];
 
 	$("a.video-card_lk").each((_, el) => {
 		const href = $(el).attr("href")?.split("?")[0];
@@ -59,4 +62,38 @@ export async function fetchNextPage(
 	});
 
 	return await res.text();
+}
+
+export function normalizeEpisodes(episodes: Array<ScrapedEpisode>) {
+	const episodeMap = new Map<number, Episode>();
+
+	episodes.forEach((episode) => {
+		const match = episode.title.match(
+			/(?<episodeNumber>\d+)(?<partId>\w)?/,
+		);
+
+		if (!match?.groups?.episodeNumber) {
+			// todo: push to fail queue
+			return;
+		}
+
+		const episodeNumber = Number(match.groups.episodeNumber);
+		const partId = match.groups.partId ?? null;
+
+		if (!episodeMap.has(episodeNumber)) {
+			episodeMap.set(episodeNumber, {
+				episode: episodeNumber,
+				parts: [],
+			});
+		}
+
+		episodeMap.get(episodeNumber)?.parts.push({
+			id: episode.id,
+			title: episode.title,
+			duration: episode.duration,
+			part: partId,
+		});
+	});
+
+	return Array.from(episodeMap.values());
 }

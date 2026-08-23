@@ -24,6 +24,7 @@ async function updateCommand() {
 			}),
 		);
 
+		episodes.sort((a, b) => a.episode - b.episode);
 		config.setEpisodes(episodes);
 		log.success(`Saved ${episodes.length} episodes`);
 	} catch (error) {
