@@ -3,11 +3,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { SourceManager } from "@/config/SourceManager";
 import { APP_NAME } from "@/constants";
-import { logger } from "@/logger";
-import type { Episode } from "@/types/Episode";
 
 class Config {
-	private log = logger.withTag("config");
 	public sourceManager;
 
 	constructor() {
@@ -36,10 +33,6 @@ class Config {
 			default:
 				return join(homedir(), APP_NAME);
 		}
-	}
-
-	public getEpisodes(): Array<Episode> {
-		return [];
 	}
 }
 

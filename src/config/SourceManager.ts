@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { GithubRepository } from "@/config/GithubRepository";
+import { GithubRepositorySource } from "@/config/GithubRepositorySource";
+import { HttpFileSource } from "@/config/HttpFileSource";
 import { logger } from "@/logger";
-import type { PartialSource } from "@/types/PartialSource";
-import type { Source } from "@/types/Source";
+import type { Source, SourceFactory } from "@/types/Source";
 
 // TODO: add lazy loading
 // TODO: add runtime schema validation
@@ -11,15 +11,17 @@ import type { Source } from "@/types/Source";
 export class SourceManager {
 	private sources: Record<string, Source>;
 	private path: string;
-	private log = logger.withTag("SourceManager");
+	private static validTypes: Record<Source["type"], SourceFactory> = {
+		github: GithubRepositorySource,
+		http: HttpFileSource,
+	};
 
 	constructor(configDirectory: string) {
 		this.path = join(configDirectory, "sources.json");
 		this.sources = {};
 
 		if (existsSync(this.path)) {
-			const raw = readFileSync(this.path, "utf-8");
-			this.sources = JSON.parse(raw);
+			this.load();
 		} else {
 			this.init();
 		}
@@ -34,37 +36,24 @@ export class SourceManager {
 		writeFileSync(this.path, JSON.stringify(this.sources));
 	}
 
-	private parseRepositoryString(sourceString: string): PartialSource {
-		const match = sourceString.match(
-			/^(?<type>[a-z]+):(?<owner>[^/]+)\/(?<repo>[^@]+)@(?<ref>.+)$/,
-		);
-
-		if (!match?.groups) {
-			throw new Error(
-				"Invalid source repository string. Format 'type:owner/repo@ref'",
-			);
-		}
-
-		return match.groups as unknown as PartialSource;
+	private load() {
+		const raw = readFileSync(this.path, "utf-8");
+		this.sources = JSON.parse(raw);
 	}
 
-	public async addSource(sourceString: string) {
-		logger.spinner.start(`Adding source ${sourceString}`);
-		if (this.sources[sourceString]) {
+	public async addSource(sourceURI: string) {
+		logger.spinner.start(`Adding source ${sourceURI}`);
+		if (this.sources[sourceURI]) {
 			throw new Error("Source already exists");
 		}
 
-		const partialSource = this.parseRepositoryString(sourceString);
-		this.log.debug(partialSource);
-
-		if (partialSource.type !== "github") {
-			throw new Error("Only github sources are supported");
+		const type = sourceURI.split(":")[0];
+		if (!SourceManager.validateType(type)) {
+			throw new Error("Invalid source type");
 		}
 
-		const repo = await GithubRepository.new(partialSource);
-		this.log.debug(repo);
-
-		this.sources[sourceString] = repo.get();
+		const source = await SourceManager.validTypes[type].FromURI(sourceURI);
+		this.sources[sourceURI] = source.get();
 		this.save();
 
 		logger.spinner.stop();
@@ -72,5 +61,12 @@ export class SourceManager {
 
 	public getSources() {
 		return this.sources;
+	}
+
+	static validateType(type: string | undefined): type is Source["type"] {
+		return (
+			type !== undefined &&
+			Object.keys(SourceManager.validTypes).includes(type)
+		);
 	}
 }
