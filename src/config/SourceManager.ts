@@ -49,6 +49,11 @@ export class SourceManager {
 	}
 
 	public async addSource(sourceString: string) {
+		logger.spinner.start(`Adding source ${sourceString}`);
+		if (this.sources[sourceString]) {
+			throw new Error("Source already exists");
+		}
+
 		const partialSource = this.parseRepositoryString(sourceString);
 		this.log.debug(partialSource);
 
@@ -61,6 +66,8 @@ export class SourceManager {
 
 		this.sources[sourceString] = repo.get();
 		this.save();
+
+		logger.spinner.stop();
 	}
 
 	public getSources() {
