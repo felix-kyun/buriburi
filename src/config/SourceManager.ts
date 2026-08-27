@@ -1,17 +1,26 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import z from "zod";
 import { GithubRepositorySource } from "@/config/GithubRepositorySource";
 import { HttpFileSource } from "@/config/HttpFileSource";
+import { IzumiError } from "@/error";
 import { logger } from "@/logger";
-import type { Source, SourceFactory } from "@/types/Source";
-
-// TODO: add lazy loading
-// TODO: add runtime schema validation
+import {
+	type Source,
+	type SourceFactory,
+	type SourceWrapper,
+	sourceSchema,
+} from "@/types/Source";
 
 export class SourceManager {
-	private sources: Record<string, Source>;
+	private sources: Record<string, SourceWrapper>;
 	private path: string;
-	private static validTypes: Record<Source["type"], SourceFactory> = {
+	private log = logger.withTag("SourceManager");
+	private static types: {
+		[K in Source["type"]]: SourceFactory<
+			SourceWrapper<Extract<Source, { type: K }>>
+		>;
+	} = {
 		github: GithubRepositorySource,
 		http: HttpFileSource,
 	};
@@ -29,34 +38,69 @@ export class SourceManager {
 
 	private init() {
 		this.sources = {};
-		writeFileSync(this.path, JSON.stringify(this.sources));
+		this.save();
 	}
 
 	private save() {
-		writeFileSync(this.path, JSON.stringify(this.sources));
+		try {
+			const sources = Object.fromEntries(
+				Object.entries(this.sources).map(([key, value]) => [
+					key,
+					value.get(),
+				]),
+			);
+			writeFileSync(this.path, JSON.stringify(sources));
+		} catch (e: unknown) {
+			throw new IzumiError("Failed to save sources", e);
+		}
 	}
 
 	private load() {
 		const raw = readFileSync(this.path, "utf-8");
-		this.sources = JSON.parse(raw);
+		let sources: Record<string, Source>;
+		try {
+			sources = z.record(z.string(), sourceSchema).parse(JSON.parse(raw));
+		} catch (e: unknown) {
+			throw new IzumiError("Failed to parse sources", e);
+		}
+
+		try {
+			this.sources = Object.fromEntries(
+				Object.entries(sources).map(
+					([key, value]: [string, Source]) => [
+						key,
+						new (
+							SourceManager.types[value.type] as SourceFactory<
+								SourceWrapper<
+									Extract<Source, { type: typeof value.type }>
+								>
+							>
+						)(value),
+					],
+				),
+			);
+		} catch (e: unknown) {
+			throw new IzumiError("Failed to load sources", e);
+		}
 	}
 
 	public async addSource(sourceURI: string) {
 		logger.spinner.start(`Adding source ${sourceURI}`);
 		if (this.sources[sourceURI]) {
-			throw new Error("Source already exists");
+			throw new IzumiError("Source already exists");
 		}
 
 		const type = sourceURI.split(":")[0];
 		if (!SourceManager.validateType(type)) {
-			throw new Error("Invalid source type");
+			throw new IzumiError("Invalid source type");
 		}
 
-		const source = await SourceManager.validTypes[type].FromURI(sourceURI);
-		this.sources[sourceURI] = source.get();
+		const source = await SourceManager.types[type].FromURI(sourceURI);
+		this.sources[sourceURI] = source;
 		this.save();
 
 		logger.spinner.stop();
+		this.log.success(`Added source ${sourceURI}`);
 	}
 
 	public getSources() {
@@ -66,7 +110,7 @@ export class SourceManager {
 	static validateType(type: string | undefined): type is Source["type"] {
 		return (
 			type !== undefined &&
-			Object.keys(SourceManager.validTypes).includes(type)
+			Object.keys(SourceManager.types).includes(type)
 		);
 	}
 }
