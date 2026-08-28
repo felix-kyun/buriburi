@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
-import type { Source, SourceType, SourceWrapper } from "@type/Source";
-import { IzumiError } from "@/error";
+import type { SourceType, SourceWrapper } from "@type/Source";
 import { config } from "@/config";
-import { mkdir, writeFile } from "node:fs/promises";
+import { IzumiError } from "@/error";
 
 export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly id: string;
@@ -12,16 +12,13 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly type = "http" as const;
 	readonly manifest: ManifestWrapper;
 
-	private constructor(
-		source: Extract<Source, { type: "http" }>,
-		manifest: ManifestWrapper,
-	) {
+	private constructor(source: SourceType<"http">, manifest: ManifestWrapper) {
 		this.id = source.id;
 		this.uri = source.uri;
 		this.manifest = manifest;
 	}
 
-	get(): Extract<Source, { type: "http" }> {
+	get(): SourceType<"http"> {
 		return {
 			id: this.id,
 			uri: this.uri,
