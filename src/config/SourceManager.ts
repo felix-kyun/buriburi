@@ -69,13 +69,9 @@ export class SourceManager {
 				Object.entries(sources).map(
 					([key, value]: [string, Source]) => [
 						key,
-						new (
-							SourceManager.types[value.type] as SourceFactory<
-								SourceWrapper<
-									Extract<Source, { type: typeof value.type }>
-								>
-							>
-						)(value),
+						new (SourceManager.types[value.type] as SourceFactory)(
+							value,
+						),
 					],
 				),
 			);
