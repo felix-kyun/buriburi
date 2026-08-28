@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
 import type { Source, SourceType, SourceWrapper } from "@type/Source";
 import { IzumiError } from "@/error";
+import { config } from "@/config";
+import { mkdir, writeFile } from "node:fs/promises";
 
 export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly id: string;
@@ -27,7 +29,17 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 		};
 	}
 
-	public async init() {}
+	public async init() {
+		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		await mkdir(dir, {
+			recursive: true,
+		});
+
+		await writeFile(
+			join(dir, "manifest.json"),
+			JSON.stringify(this.manifest.get()),
+		);
+	}
 
 	public async update() {}
 

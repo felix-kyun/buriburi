@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
 import type { Source, SourceType, SourceWrapper } from "@type/Source";
 import { IzumiError } from "@/error";
+import { mkdir, writeFile } from "node:fs/promises";
+import { config } from "@/config";
 
-export class GithubRepositorySource
-	implements SourceWrapper<SourceType<"github">>
-{
+export class GithubRepositorySource implements SourceWrapper<
+	SourceType<"github">
+> {
 	readonly id: string;
 	readonly uri: string;
 	readonly type = "github" as const;
@@ -15,7 +17,10 @@ export class GithubRepositorySource
 	readonly files: Record<string, string>;
 	readonly manifest: ManifestWrapper;
 
-	private constructor(source: SourceType<"github">, manifest: ManifestWrapper) {
+	private constructor(
+		source: SourceType<"github">,
+		manifest: ManifestWrapper,
+	) {
 		this.id = source.id;
 		this.uri = source.uri;
 		this.sha = source.sha;
@@ -109,7 +114,36 @@ export class GithubRepositorySource
 		return new this(source, manifest);
 	}
 
-	public async init() {}
+	public async init() {
+		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		await mkdir(dir, {
+			recursive: true,
+		});
+
+		await writeFile(
+			join(dir, "manifest.json"),
+			JSON.stringify(this.manifest.get()),
+		);
+
+		const deps = this.manifest
+			.get()
+			.providers.filter((p) => p.kind !== "static")
+			.map((p) => p.script);
+
+		const { owner, repo } = GithubRepositorySource.parseSourceURI(this.uri);
+
+		Promise.all(
+			deps.map(async (dep) => {
+				const response = await fetch(
+					`https://raw.githubusercontent.com/${owner}/${repo}/${this.sha}/${dep}`,
+				);
+				const file = await response.text();
+				const path = join(dir, dep);
+				await mkdir(dirname(path), { recursive: true });
+				await writeFile(path, file);
+			}),
+		);
+	}
 
 	public async update() {}
 
