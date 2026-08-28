@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { GithubRepositorySource } from "@class/GithubRepositorySource";
+import { HttpFileSource } from "@class/HttpFileSource";
 import z from "zod";
-import { GithubRepositorySource } from "@/classes/GithubRepositorySource";
-import { HttpFileSource } from "@/classes/HttpFileSource";
 import { IzumiError } from "@/error";
 import { logger } from "@/logger";
 import {
@@ -50,10 +50,7 @@ export class SourceManager {
 	private save() {
 		try {
 			const sources = Object.fromEntries(
-				Object.entries(this.sources).map(([id, value]) => [
-					id,
-					value.get(),
-				]),
+				Object.entries(this.sources).map(([id, value]) => [id, value.get()]),
 			);
 			writeFileSync(this.file, JSON.stringify(sources));
 		} catch (e: unknown) {
@@ -142,8 +139,7 @@ export class SourceManager {
 
 	static validateType(type: string | undefined): type is Source["type"] {
 		return (
-			type !== undefined &&
-			Object.keys(SourceManager.types).includes(type)
+			type !== undefined && Object.keys(SourceManager.types).includes(type)
 		);
 	}
 }

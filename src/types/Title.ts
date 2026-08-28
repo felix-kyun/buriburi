@@ -24,9 +24,7 @@ export const titleSchema = z.object({
 								kind: z.literal("direct"),
 								url: z.string(),
 								info: z.string().optional(),
-								headers: z
-									.record(z.string(), z.string())
-									.optional(),
+								headers: z.record(z.string(), z.string()).optional(),
 							}),
 							z.object({
 								kind: z.literal("lazy"),

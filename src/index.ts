@@ -9,8 +9,8 @@
 import { registerSource } from "@cmd/source";
 import { Command } from "commander";
 import packageJson from "@/../package.json" with { type: "json" };
+import { APP_NAME } from "@/constants";
 import { logger } from "@/logger";
-import { APP_NAME } from "./constants";
 
 const program = new Command();
 const commands: Array<(program: Command) => void> = [registerSource];

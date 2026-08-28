@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ManifestWrapper } from "@/classes/ManifestWrapper";
+import { ManifestWrapper } from "@class/ManifestWrapper";
+import type { Source, SourceType, SourceWrapper } from "@type/Source";
 import { IzumiError } from "@/error";
-import type { Source, SourceType, SourceWrapper } from "@/types/Source";
 
-export class GithubRepositorySource implements SourceWrapper<
-	SourceType<"github">
-> {
+export class GithubRepositorySource
+	implements SourceWrapper<SourceType<"github">>
+{
 	readonly id: string;
 	readonly uri: string;
 	readonly type = "github" as const;
@@ -15,10 +15,7 @@ export class GithubRepositorySource implements SourceWrapper<
 	readonly files: Record<string, string>;
 	readonly manifest: ManifestWrapper;
 
-	private constructor(
-		source: SourceType<"github">,
-		manifest: ManifestWrapper,
-	) {
+	private constructor(source: SourceType<"github">, manifest: ManifestWrapper) {
 		this.id = source.id;
 		this.uri = source.uri;
 		this.sha = source.sha;

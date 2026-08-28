@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { ManifestWrapper } from "@class/ManifestWrapper";
+import type { Source, SourceType, SourceWrapper } from "@type/Source";
 import { IzumiError } from "@/error";
-import type { Source, SourceType, SourceWrapper } from "@/types/Source";
-import { ManifestWrapper } from "./ManifestWrapper";
 
 export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly id: string;

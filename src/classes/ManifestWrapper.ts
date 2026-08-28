@@ -1,4 +1,4 @@
-import { type Manifest, manifestSchema } from "@/types/Manifest";
+import { type Manifest, manifestSchema } from "@type/Manifest";
 
 export class ManifestWrapper {
 	constructor(private readonly manifest: Manifest) {}

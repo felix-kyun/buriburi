@@ -1,5 +1,5 @@
+import { providerSchema } from "@type/Provider";
 import { z } from "zod";
-import { providerSchema } from "@/types/Provider";
 
 export const manifestSchema = z.object({
 	id: z.string(),

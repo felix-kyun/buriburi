@@ -1,5 +1,5 @@
+import { titleSchema } from "@type/Title";
 import * as z from "zod";
-import { titleSchema } from "@/types/Title";
 
 const baseSchema = z.object({
 	kind: z.string(),

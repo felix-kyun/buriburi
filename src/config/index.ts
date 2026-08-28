@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { SourceManager } from "@/classes/SourceManager";
+import { SourceManager } from "@class/SourceManager";
 import { APP_NAME } from "@/constants";
 import { logger } from "@/logger";
 
@@ -36,8 +36,7 @@ class Config {
 				return join(homedir(), "Library", "Preferences", appName);
 			case "linux":
 				return join(
-					process.env.XDG_CONFIG_HOME ||
-						join(homedir(), ".config", appName),
+					process.env.XDG_CONFIG_HOME || join(homedir(), ".config", appName),
 				);
 			default:
 				return join(homedir(), appName);

@@ -20,6 +20,8 @@
 
 		"paths": {
 			"@cmd/*": ["./src/subcommands/*"],
+			"@class/*": ["./src/classes/*"],
+			"@type/*": ["./src/types/*"],
 			"@/*": ["./src/*"]
 		}
 	}
