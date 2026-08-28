@@ -2,8 +2,6 @@ import type { Command } from "commander";
 import { config } from "@/config";
 import { logger } from "@/logger";
 
-async function listCmd() {}
-
 export function registerSource(program: Command) {
 	const source = program.command("source").description("Manage Sources");
 
@@ -12,11 +10,11 @@ export function registerSource(program: Command) {
 		.description("Add new source")
 		.argument("<repository>")
 		.action(async (repository) => {
-			try {
-				await config.sourceManager.addSource(repository);
-			} catch (error: unknown) {
-				logger.error(error);
-			}
+			await config.sourceManager.addSource(repository);
+			// try {
+			// } catch (error: unknown) {
+			// 	logger.error(error);
+			// }
 		});
 
 	source

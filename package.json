@@ -28,7 +28,9 @@
 	"dependencies": {
 		"cheerio": "^1.2.0",
 		"commander": "^15.0.0",
-		"consola": "^3.4.2"
+		"consola": "^3.4.2",
+		"yocto-spinner": "^1.2.2",
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.9",
