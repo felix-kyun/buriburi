@@ -9,10 +9,16 @@
 		"typecheck": "tsc --noEmit",
 		"check": "biome check --write --no-errors-on-unmatched",
 		"lint": "biome lint --write --no-errors-on-unmatched",
-		"format": "biome format --write"
+		"format": "biome format --write",
+		"prepare": "husky"
 	},
 	"bin": {
 		"buriburi": "dist/index.js"
+	},
+	"lint-staged": {
+		"*.{js,ts,jsx,tsx,json}": [
+			"biome check --write --no-errors-on-unmatched"
+		]
 	},
 	"keywords": [],
 	"author": "felix-kyun",
@@ -35,6 +41,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.5.9",
 		"@types/node": "^26.2.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.4.1",
 		"tsup": "^8.5.1",
 		"tsx": "^4.23.12",
 		"typescript": "^7.0.2"
