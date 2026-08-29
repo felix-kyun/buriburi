@@ -1,6 +1,7 @@
 import Table from "cli-table3";
 import type { Command } from "commander";
 import { config } from "@/config";
+import { logger } from "@/logger";
 
 export function registerSource(program: Command) {
 	const source = program.command("source").description("Manage Sources");
@@ -10,6 +11,11 @@ export function registerSource(program: Command) {
 		.description("List installed sources")
 		.action(() => {
 			const sources = config.sourceManager.getSources();
+			if (Object.keys(sources).length === 0) {
+				logger.error("No sources configured");
+				return;
+			}
+
 			const table = new Table({
 				chars: {
 					"top-left": "╭",
