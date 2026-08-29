@@ -6,14 +6,6 @@ export function registerSource(program: Command) {
 	const source = program.command("source").description("Manage Sources");
 
 	source
-		.command("add")
-		.description("Add new source")
-		.argument("<repository>")
-		.action(async (repository) => {
-			await config.sourceManager.addSource(repository);
-		});
-
-	source
 		.command("list")
 		.description("List installed sources")
 		.action(() => {
@@ -33,5 +25,21 @@ export function registerSource(program: Command) {
 			});
 
 			console.log(table.toString());
+		});
+
+	source
+		.command("add")
+		.description("Add new source")
+		.argument("<uri>")
+		.action(async (uri) => {
+			await config.sourceManager.addSource(uri);
+		});
+
+	source
+		.command("remove")
+		.description("Remove a source")
+		.argument("<uri>")
+		.action(async (uri) => {
+			await config.sourceManager.removeSource(uri);
 		});
 }

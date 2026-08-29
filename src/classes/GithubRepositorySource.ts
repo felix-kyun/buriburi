@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
 import type { Source, SourceType, SourceWrapper } from "@type/Source";
@@ -144,7 +144,10 @@ export class GithubRepositorySource
 
 	public async update() {}
 
-	public async remove() {}
+	public async remove() {
+		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		await rm(dir, { recursive: true, force: true });
+	}
 
 	// private static async fetchRemote(
 	// 	sourceURI: string,

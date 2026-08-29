@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
 import type { SourceType, SourceWrapper } from "@type/Source";
@@ -40,7 +40,10 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 
 	public async update() {}
 
-	public async remove() {}
+	public async remove() {
+		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		await rm(dir, { recursive: true, force: true });
+	}
 
 	public static async FromURI(uri: string): Promise<HttpFileSource> {
 		let rawManifest: Response;
