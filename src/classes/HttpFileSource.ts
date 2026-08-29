@@ -7,6 +7,7 @@ import type { SourceType, SourceWrapper } from "@type/Source";
 import { StatusCodes } from "http-status-codes";
 import { config } from "@/config";
 import { IzumiError } from "@/error";
+import { logger } from "@/logger";
 
 export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly id: string;
@@ -14,6 +15,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly uri: string;
 	etag: Nullable<string>;
 	readonly manifest: ManifestWrapper;
+	static readonly log = logger.withTag("HttpFileSource");
 
 	private constructor(source: SourceType<"http">, manifest: ManifestWrapper) {
 		this.id = source.id;
@@ -32,6 +34,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	}
 
 	public async init() {
+		HttpFileSource.log.debug(`Initializing source ${this.id}`);
 		const dir = join(config.sourceManager.getSourceStore(), this.id);
 		await mkdir(dir, {
 			recursive: true,
@@ -44,6 +47,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	}
 
 	public async update() {
+		HttpFileSource.log.debug(`Updating source ${this.id}`);
 		let response: Response;
 		const headers: Record<string, string> = {};
 
@@ -57,6 +61,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 			});
 
 			if (response.status === StatusCodes.NOT_MODIFIED) {
+				HttpFileSource.log.debug("Upstream not modified (304)");
 				return;
 			}
 
@@ -81,11 +86,13 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	}
 
 	public async remove() {
+		HttpFileSource.log.debug(`Removing source ${this.id}`);
 		const dir = join(config.sourceManager.getSourceStore(), this.id);
 		await rm(dir, { recursive: true, force: true });
 	}
 
 	public static async FromURI(uri: string): Promise<HttpFileSource> {
+		HttpFileSource.log.debug(`Creating new HttpFileSource from ${uri}`);
 		let rawManifest: Response;
 		try {
 			rawManifest = await fetch(uri);
@@ -122,6 +129,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 		sourceDirectory: string,
 		source: SourceType<"http">,
 	) {
+		HttpFileSource.log.debug(`Loading source ${source.id}`);
 		const path = join(sourceDirectory, "manifest.json");
 
 		const raw = readFileSync(path, "utf-8");
