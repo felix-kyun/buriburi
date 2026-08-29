@@ -8,22 +8,26 @@
 
 import { registerSource } from "@cmd/source";
 import { Command } from "commander";
+import { LogLevels } from "consola";
 import packageJson from "@/../package.json" with { type: "json" };
 import { APP_NAME } from "@/constants";
 import { logger } from "@/logger";
 
-const program = new Command();
-const commands: Array<(program: Command) => void> = [registerSource];
+const subCommands: Array<(program: Command) => void> = [registerSource];
 
-program.name(APP_NAME);
-program.description("");
-program.version(
-	packageJson.version,
-	"-v, --version",
-	"Print the version number",
-);
+const program = new Command()
+	.name(APP_NAME)
+	.description("")
+	.option("-d, --debug", "Enable debug logs")
+	.version(packageJson.version, "-v, --version", "Print the version number");
 
-commands.forEach((register) => {
+program.hook("preAction", (thisCommand, _actionCommand) => {
+	if (thisCommand.opts().debug) {
+		logger.level = LogLevels.debug;
+	}
+});
+
+subCommands.forEach((register) => {
 	register(program);
 });
 
