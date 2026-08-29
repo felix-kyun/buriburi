@@ -84,9 +84,6 @@ export class SourceManager {
 
 	public async addSource(uri: string) {
 		logger.spinner.start(`Adding ${uri}`);
-		if (this.sources[uri]) {
-			throw new IzumiError("Source already exists");
-		}
 
 		const type = uri.split(":")[0];
 		if (!SourceManager.validateType(type)) {
@@ -94,6 +91,10 @@ export class SourceManager {
 		}
 
 		const source = await SourceManager.types[type].FromURI(uri);
+		if (this.sources[source.id]) {
+			throw new IzumiError("Source already exists");
+		}
+
 		await source.init();
 		this.sources[source.id] = source;
 		this.save();
