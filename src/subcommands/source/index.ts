@@ -42,6 +42,13 @@ export function registerSource(program: Command) {
 		});
 
 	source
+		.command("update")
+		.description("Update configured sources")
+		.action(async () => {
+			await config.sourceManager.updateSources();
+		});
+
+	source
 		.command("remove")
 		.description("Remove a source")
 		.argument("<uri>")

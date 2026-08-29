@@ -118,7 +118,7 @@ export class SourceManager {
 		this.log.success(`Removed source ${id}`);
 	}
 
-	public async update() {
+	public async updateSources() {
 		logger.spinner.start("Updating sources");
 		for (const source of Object.values(this.sources)) {
 			await source.update();
