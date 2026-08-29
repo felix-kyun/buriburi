@@ -2,19 +2,23 @@ import { readFileSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
+import type { Nullable } from "@type/Nullable";
 import type { SourceType, SourceWrapper } from "@type/Source";
+import { StatusCodes } from "http-status-codes";
 import { config } from "@/config";
 import { IzumiError } from "@/error";
 
 export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly id: string;
-	readonly uri: string;
 	readonly type = "http" as const;
+	readonly uri: string;
+	etag: Nullable<string>;
 	readonly manifest: ManifestWrapper;
 
 	private constructor(source: SourceType<"http">, manifest: ManifestWrapper) {
 		this.id = source.id;
 		this.uri = source.uri;
+		this.etag = source.etag;
 		this.manifest = manifest;
 	}
 
@@ -23,6 +27,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 			id: this.id,
 			uri: this.uri,
 			type: this.type,
+			etag: this.etag,
 		};
 	}
 
@@ -39,11 +44,24 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	}
 
 	public async update() {
-		let rawManifest: Response;
+		let response: Response;
+		const headers: Record<string, string> = {};
+
+		if (this.etag) {
+			headers["If-None-Match"] = this.etag;
+		}
+
 		try {
-			rawManifest = await fetch(this.uri);
-			if (!rawManifest.ok) {
-				throw new Error(rawManifest.statusText);
+			response = await fetch(this.uri, {
+				headers,
+			});
+
+			if (response.status === StatusCodes.NOT_MODIFIED) {
+				return;
+			}
+
+			if (!response.ok) {
+				throw new Error(response.statusText);
 			}
 		} catch (e) {
 			throw new IzumiError("Failed to fetch manifest", e);
@@ -51,10 +69,12 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 
 		let manifest: ManifestWrapper;
 		try {
-			manifest = ManifestWrapper.fromJson(await rawManifest.json());
+			manifest = ManifestWrapper.fromJson(await response.json());
 		} catch (e) {
 			throw new IzumiError("Failed to parse manifest", e);
 		}
+
+		this.etag = response.headers.get("etag");
 
 		const dir = join(config.sourceManager.getSourceStore(), this.id);
 		await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest.get()));
@@ -92,6 +112,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 				id: manifest.get().id,
 				type: "http",
 				uri,
+				etag: rawManifest.headers.get("etag"),
 			},
 			manifest,
 		);
