@@ -38,7 +38,27 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 		);
 	}
 
-	public async update() {}
+	public async update() {
+		let rawManifest: Response;
+		try {
+			rawManifest = await fetch(this.uri);
+			if (!rawManifest.ok) {
+				throw new Error(rawManifest.statusText);
+			}
+		} catch (e) {
+			throw new IzumiError("Failed to fetch manifest", e);
+		}
+
+		let manifest: ManifestWrapper;
+		try {
+			manifest = ManifestWrapper.fromJson(await rawManifest.json());
+		} catch (e) {
+			throw new IzumiError("Failed to parse manifest", e);
+		}
+
+		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest.get()));
+	}
 
 	public async remove() {
 		const dir = join(config.sourceManager.getSourceStore(), this.id);
