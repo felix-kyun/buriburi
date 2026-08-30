@@ -15,6 +15,7 @@ const githubRepositorySourceSchema = baseSourceSchema.extend({
 
 const httpFileSource = baseSourceSchema.extend({
 	type: z.literal("http"),
+	etag: z.string().nullable(),
 });
 
 export const sourceSchema = z.discriminatedUnion("type", [
