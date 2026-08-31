@@ -2,9 +2,14 @@ import { readFileSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
+import type { Nullable } from "@type/Nullable";
 import type { Source, SourceType, SourceWrapper } from "@type/Source";
+import { StatusCodes } from "http-status-codes";
 import { config } from "@/config";
 import { IzumiError } from "@/error";
+import { logger } from "@/logger";
+
+// TODO: orphaned script cleanup on update
 
 export class GithubRepositorySource
 	implements SourceWrapper<SourceType<"github">>
@@ -12,10 +17,11 @@ export class GithubRepositorySource
 	readonly id: string;
 	readonly uri: string;
 	readonly type = "github" as const;
-	readonly sha: string;
-	readonly etag: string;
-	readonly files: Record<string, string>;
-	readonly manifest: ManifestWrapper;
+	sha: string;
+	etag: Nullable<string>;
+	files: Record<string, string>;
+	manifest: ManifestWrapper;
+	static readonly log = logger.withTag("GithubRepositorySource");
 
 	private constructor(source: SourceType<"github">, manifest: ManifestWrapper) {
 		this.id = source.id;
@@ -86,14 +92,35 @@ export class GithubRepositorySource
 			throw new IzumiError("Failed to parse manifest", e);
 		}
 
+		const scriptFiles = manifest
+			.get()
+			.providers.filter((p) => p.kind !== "static")
+			.map((p) => p.script)
+			.reduce(
+				(acc, script) => {
+					const hash = files[script];
+					if (!hash) {
+						throw new IzumiError(
+							`provider dependency ${script} not found in repository`,
+						);
+					}
+					acc[script] = hash;
+					return acc;
+				},
+				{} as Record<string, string>,
+			);
+
 		return new this(
 			{
 				id: manifest.get().id,
 				type: "github",
 				uri: uri,
-				etag: response.headers.get("etag") ?? "",
+				etag: response.headers.get("etag") ?? null,
 				sha,
-				files,
+				files: {
+					...scriptFiles,
+					"manifest.json": files["manifest.json"],
+				},
 			},
 			manifest,
 		);
@@ -122,94 +149,163 @@ export class GithubRepositorySource
 			JSON.stringify(this.manifest.get()),
 		);
 
-		const deps = this.manifest
+		const scriptFiles = this.manifest
 			.get()
 			.providers.filter((p) => p.kind !== "static")
 			.map((p) => p.script);
 
 		const { owner, repo } = GithubRepositorySource.parseSourceURI(this.uri);
 
-		Promise.all(
-			deps.map(async (dep) => {
+		await Promise.all(
+			scriptFiles.map(async (script) => {
 				const response = await fetch(
-					`https://raw.githubusercontent.com/${owner}/${repo}/${this.sha}/${dep}`,
+					`https://raw.githubusercontent.com/${owner}/${repo}/${this.sha}/${script}`,
 				);
+				if (!response.ok) {
+					throw new IzumiError(`Failed to fetch script ${script}`);
+				}
 				const file = await response.text();
-				const path = join(dir, dep);
+				const path = join(dir, script);
 				await mkdir(dirname(path), { recursive: true });
 				await writeFile(path, file);
 			}),
 		);
 	}
 
-	public async update() {}
+	public async update() {
+		GithubRepositorySource.log.debug(`Updating source ${this.id}`);
+		const { owner, repo, ref } = GithubRepositorySource.parseSourceURI(
+			this.uri,
+		);
+
+		const headers: Record<string, string> = {
+			Accept: "application/vnd.github+json",
+		};
+
+		if (this.etag) {
+			headers["If-None-Match"] = this.etag;
+		}
+
+		const response = await fetch(
+			`https://api.github.com/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`,
+			{
+				headers,
+			},
+		);
+
+		if (response.status === StatusCodes.NOT_MODIFIED) {
+			GithubRepositorySource.log.debug("Upstream not modified (304)");
+			return;
+		}
+
+		if (!response.ok) {
+			throw new IzumiError("Failed to fetch repository");
+		}
+
+		const { sha, tree } = (await response.json()) as {
+			sha: string;
+			tree: Array<{
+				path: string;
+				type: string;
+				sha: string;
+			}>;
+		};
+
+		if (sha === this.sha) {
+			GithubRepositorySource.log.debug("No new commits found");
+			return;
+		}
+
+		const fileHash = tree
+			.filter((item) => item.type === "blob")
+			.reduce(
+				(acc, { path, sha }) => {
+					acc[path] = sha;
+					return acc;
+				},
+				{} as Record<string, string>,
+			);
+
+		if (!fileHash["manifest.json"]) {
+			throw new IzumiError("Manifest not found in repository");
+		}
+
+		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		let manifest: ManifestWrapper;
+
+		if (fileHash["manifest.json"] === this.files["manifest.json"]) {
+			GithubRepositorySource.log.debug("Manifest not updated");
+			manifest = this.manifest;
+		} else {
+			const rawManifest = await fetch(
+				`https://raw.githubusercontent.com/${owner}/${repo}/${sha}/manifest.json`,
+			);
+
+			try {
+				manifest = ManifestWrapper.fromJson(await rawManifest.json());
+			} catch (e) {
+				throw new IzumiError("Failed to parse manifest", e);
+			}
+		}
+
+		const scriptFiles = manifest
+			.get()
+			.providers.filter((p) => p.kind !== "static")
+			.map((p) => p.script)
+			.reduce(
+				(acc, script) => {
+					const hash = fileHash[script];
+					// ensure script exists
+					if (!hash) {
+						throw new IzumiError(
+							`provider dependency ${script} not found in repository`,
+						);
+					}
+					acc[script] = hash;
+					return acc;
+				},
+				{} as Record<string, string>,
+			);
+
+		await Promise.all(
+			Object.keys(scriptFiles)
+				// only keep new/updated script
+				.filter((script) => {
+					return !this.files[script] || this.files[script] !== fileHash[script];
+				})
+				// fetch each script
+				.map(async (script) => {
+					const response = await fetch(
+						`https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${script}`,
+					);
+					if (!response.ok) {
+						throw new IzumiError(`Failed to fetch script ${script}`);
+					}
+					const file = await response.text();
+					const path = join(dir, script);
+					await mkdir(dirname(path), { recursive: true });
+					await writeFile(path, file);
+				}),
+		);
+
+		await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest.get()));
+
+		this.manifest = manifest;
+		this.sha = sha;
+		this.etag = response.headers.get("etag") ?? null;
+		this.files = {
+			...scriptFiles,
+			"manifest.json": fileHash["manifest.json"],
+		};
+	}
 
 	public async remove() {
 		const dir = join(config.sourceManager.getSourceStore(), this.id);
 		await rm(dir, { recursive: true, force: true });
 	}
 
-	// private static async fetchRemote(
-	// 	sourceURI: string,
-	// ): Promise<RepositoryMeta>;
-	// private static async fetchRemote(
-	// 	sourceURI: string,
-	// 	etag: string,
-	// ): Promise<RepositoryMeta | null>;
-
-	// private static async fetchRemote(uri: string, etag?: string) {
-	// 	try {
-	// 		const { owner, repo, ref } =
-	// 			GithubRepositorySource.parseSourceURI(uri);
-
-	// 		const headers: Record<string, string> = {
-	// 			Accept: "application/vnd.github+json",
-	// 		};
-
-	// 		if (etag) {
-	// 			headers["If-None-Match"] = etag;
-	// 		}
-
-	// 		const response = await fetch(
-	// 			`https://api.github.com/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`,
-	// 			{
-	// 				headers,
-	// 			},
-	// 		);
-
-	// 		if (response.status === 304) {
-	// 			return null;
-	// 		}
-
-	// 		const { sha, tree } = (await response.json()) as {
-	// 			sha: string;
-	// 			tree: Array<{
-	// 				path: string;
-	// 				type: string;
-	// 				sha: string;
-	// 			}>;
-	// 		};
-
-	// 		return {
-	// 			etag: response.headers.get("etag"),
-	// 			sha,
-	// 			files: tree
-	// 				.filter((item) => item.type === "blob")
-	// 				.reduce(
-	// 					(acc, { path, sha }) => {
-	// 						acc[path] = sha;
-	// 						return acc;
-	// 					},
-	// 					{} as Record<string, string>,
-	// 				),
-	// 		};
-	// 	} catch (error: unknown) {
-	// 		logger.withTag("GithubRepository").error(error);
-	// 	}
-	// }
-
-	private static parseSourceURI(sourceString: string) {
-		const match = sourceString.match(
+	private static parseSourceURI(uri: string) {
+		const match = uri.match(
 			/^(?<type>[a-z]+):(?<owner>[^/]+)\/(?<repo>[^@]+)@(?<ref>.+)$/,
 		);
 

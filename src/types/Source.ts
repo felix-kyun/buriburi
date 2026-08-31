@@ -9,7 +9,7 @@ const baseSourceSchema = z.object({
 const githubRepositorySourceSchema = baseSourceSchema.extend({
 	type: z.literal("github"),
 	sha: z.hash("sha1"),
-	etag: z.string(),
+	etag: z.string().nullable(),
 	files: z.record(z.string(), z.string()),
 });
 
