@@ -16,7 +16,9 @@ interface Logger extends ConsolaInstance {
 }
 
 const spinner = yoctoSpinner();
-export const logger: Logger = createConsola() as Logger;
+export const logger: Logger = createConsola({
+	level: process.env.LOG === "debug" ? LogLevels.debug : LogLevels.info,
+}) as Logger;
 const reporter = logger.options.reporters[0];
 
 logger.spinner = {
