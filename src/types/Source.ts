@@ -1,3 +1,4 @@
+import type { ManifestWrapper } from "@class/ManifestWrapper";
 import * as z from "zod";
 
 const baseSourceSchema = z.object({
@@ -27,6 +28,7 @@ export type Source = z.infer<typeof sourceSchema>;
 export type SourceType<T extends Source["kind"]> = Extract<Source, { kind: T }>;
 
 export type SourceWrapper<T extends Source = Source> = T & {
+	manifest: ManifestWrapper;
 	get: () => T;
 	init: () => Promise<void>;
 	update: () => Promise<void>;

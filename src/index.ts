@@ -7,12 +7,16 @@
  */
 
 import { registerSource } from "@cmd/source";
+import { registerTitle } from "@cmd/title";
 import { Command } from "commander";
 import packageJson from "@/../package.json" with { type: "json" };
 import { APP_NAME } from "@/constants";
 import { logger } from "@/logger";
 
-const subCommands: Array<(program: Command) => void> = [registerSource];
+const subCommands: Array<(program: Command) => void> = [
+	registerSource,
+	registerTitle,
+];
 
 const program = new Command()
 	.name(APP_NAME)

@@ -2,11 +2,13 @@ import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { SourceManager } from "@class/SourceManager";
+import { TitleManager } from "@class/TitleManager";
 import { APP_NAME } from "@/constants";
 import { logger } from "@/logger";
 
 class Config {
 	public sourceManager;
+	public titleManager;
 
 	constructor(appName: string) {
 		const root = this.getConfigDirectory(appName);
@@ -19,6 +21,7 @@ class Config {
 
 		try {
 			this.sourceManager = new SourceManager(root);
+			this.titleManager = new TitleManager(root);
 		} catch (e: unknown) {
 			logger.error(e);
 			process.exit(1);
