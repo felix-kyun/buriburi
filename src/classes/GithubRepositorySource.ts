@@ -3,7 +3,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { ManifestWrapper } from "@class/ManifestWrapper";
 import type { Nullable } from "@type/Nullable";
-import type { Source, SourceType, SourceWrapper } from "@type/Source";
+import type { SourceType, SourceWrapper } from "@type/Source";
 import { StatusCodes } from "http-status-codes";
 import { config } from "@/config";
 import { IzumiError } from "@/error";
@@ -16,7 +16,7 @@ export class GithubRepositorySource
 {
 	readonly id: string;
 	readonly uri: string;
-	readonly type = "github" as const;
+	readonly kind = "github" as const;
 	sha: string;
 	etag: Nullable<string>;
 	files: Record<string, string>;
@@ -32,10 +32,10 @@ export class GithubRepositorySource
 		this.manifest = manifest;
 	}
 
-	public get(): Extract<Source, { type: "github" }> {
+	public get(): SourceType<"github"> {
 		return {
 			id: this.id,
-			type: this.type,
+			kind: this.kind,
 			uri: this.uri,
 			sha: this.sha,
 			etag: this.etag,
@@ -113,7 +113,7 @@ export class GithubRepositorySource
 		return new this(
 			{
 				id: manifest.get().id,
-				type: "github",
+				kind: "github",
 				uri: uri,
 				etag: response.headers.get("etag") ?? null,
 				sha,

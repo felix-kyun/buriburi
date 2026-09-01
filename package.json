@@ -13,7 +13,7 @@
 		"prepare": "husky"
 	},
 	"bin": {
-		"buriburi": "dist/index.js"
+		"izumi": "dist/index.js"
 	},
 	"lint-staged": {
 		"*.{js,ts,jsx,tsx,json}": [

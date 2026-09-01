@@ -8,6 +8,7 @@ import { logger } from "@/logger";
 import {
 	type Source,
 	type SourceFactory,
+	type SourceType,
 	type SourceWrapper,
 	sourceSchema,
 } from "@/types/Source";
@@ -18,9 +19,7 @@ export class SourceManager {
 	private readonly store: string;
 	private readonly log = logger.withTag("SourceManager");
 	private static readonly types: {
-		[K in Source["type"]]: SourceFactory<
-			SourceWrapper<Extract<Source, { type: K }>>
-		>;
+		[K in Source["kind"]]: SourceFactory<SourceWrapper<SourceType<K>>>;
 	} = {
 		github: GithubRepositorySource,
 		http: HttpFileSource,
@@ -71,7 +70,7 @@ export class SourceManager {
 			this.sources = Object.fromEntries(
 				Object.entries(sources).map(([id, value]) => [
 					id,
-					SourceManager.types[value.type].FromSource(
+					SourceManager.types[value.kind].FromSource(
 						join(this.store, value.id),
 						value,
 					),
@@ -138,7 +137,7 @@ export class SourceManager {
 		return this.store;
 	}
 
-	static validateType(type: string | undefined): type is Source["type"] {
+	static validateType(type: string | undefined): type is Source["kind"] {
 		return (
 			type !== undefined && Object.keys(SourceManager.types).includes(type)
 		);

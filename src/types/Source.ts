@@ -2,29 +2,29 @@ import * as z from "zod";
 
 const baseSourceSchema = z.object({
 	id: z.string(),
-	type: z.string(),
+	kind: z.string(),
 	uri: z.string(),
 });
 
 const githubRepositorySourceSchema = baseSourceSchema.extend({
-	type: z.literal("github"),
+	kind: z.literal("github"),
 	sha: z.hash("sha1"),
 	etag: z.string().nullable(),
 	files: z.record(z.string(), z.string()),
 });
 
 const httpFileSource = baseSourceSchema.extend({
-	type: z.literal("http"),
+	kind: z.literal("http"),
 	etag: z.string().nullable(),
 });
 
-export const sourceSchema = z.discriminatedUnion("type", [
+export const sourceSchema = z.discriminatedUnion("kind", [
 	githubRepositorySourceSchema,
 	httpFileSource,
 ]);
 
 export type Source = z.infer<typeof sourceSchema>;
-export type SourceType<T extends Source["type"]> = Extract<Source, { type: T }>;
+export type SourceType<T extends Source["kind"]> = Extract<Source, { kind: T }>;
 
 export type SourceWrapper<T extends Source = Source> = T & {
 	get: () => T;

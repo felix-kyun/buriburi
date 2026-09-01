@@ -11,7 +11,7 @@ import { logger } from "@/logger";
 
 export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 	readonly id: string;
-	readonly type = "http" as const;
+	readonly kind = "http" as const;
 	readonly uri: string;
 	etag: Nullable<string>;
 	readonly manifest: ManifestWrapper;
@@ -28,7 +28,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 		return {
 			id: this.id,
 			uri: this.uri,
-			type: this.type,
+			kind: this.kind,
 			etag: this.etag,
 		};
 	}
@@ -117,7 +117,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 		return new HttpFileSource(
 			{
 				id: manifest.get().id,
-				type: "http",
+				kind: "http",
 				uri,
 				etag: rawManifest.headers.get("etag"),
 			},
