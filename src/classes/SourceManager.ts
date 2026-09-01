@@ -16,9 +16,9 @@ import {
 export class SourceManager {
 	private sources: Record<string, SourceWrapper>;
 	private readonly file: string;
-	private readonly store: string;
+	private readonly sourceDirectory: string;
 	private readonly log = logger.withTag("SourceManager");
-	private static readonly types: {
+	private static readonly classMap: {
 		[K in Source["kind"]]: SourceFactory<SourceWrapper<SourceType<K>>>;
 	} = {
 		github: GithubRepositorySource,
@@ -27,11 +27,11 @@ export class SourceManager {
 
 	constructor(configDirectory: string) {
 		this.file = join(configDirectory, "sources.json");
-		this.store = join(configDirectory, "sources.d");
+		this.sourceDirectory = join(configDirectory, "sources.d");
 		this.sources = {};
 
 		if (!existsSync(this.file)) {
-			mkdirSync(this.store, { recursive: true });
+			mkdirSync(this.sourceDirectory, { recursive: true });
 		}
 
 		if (existsSync(this.file)) {
@@ -70,8 +70,8 @@ export class SourceManager {
 			this.sources = Object.fromEntries(
 				Object.entries(sources).map(([id, value]) => [
 					id,
-					SourceManager.types[value.kind].FromSource(
-						join(this.store, value.id),
+					SourceManager.classMap[value.kind].FromSource(
+						join(this.sourceDirectory, value.id),
 						value,
 					),
 				]),
@@ -89,7 +89,7 @@ export class SourceManager {
 			throw new IzumiError("Invalid source type");
 		}
 
-		const source = await SourceManager.types[type].FromURI(uri);
+		const source = await SourceManager.classMap[type].FromURI(uri);
 		if (this.sources[source.id]) {
 			throw new IzumiError("Source already exists");
 		}
@@ -133,13 +133,13 @@ export class SourceManager {
 		return this.sources;
 	}
 
-	public getSourceStore() {
-		return this.store;
+	public getSourceDirectory() {
+		return this.sourceDirectory;
 	}
 
-	static validateType(type: string | undefined): type is Source["kind"] {
+	static validateType(kind: string | undefined): kind is Source["kind"] {
 		return (
-			type !== undefined && Object.keys(SourceManager.types).includes(type)
+			kind !== undefined && Object.keys(SourceManager.classMap).includes(kind)
 		);
 	}
 }

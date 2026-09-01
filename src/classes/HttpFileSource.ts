@@ -35,7 +35,7 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 
 	public async init() {
 		HttpFileSource.log.debug(`Initializing source ${this.id}`);
-		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		const dir = join(config.sourceManager.getSourceDirectory(), this.id);
 		await mkdir(dir, {
 			recursive: true,
 		});
@@ -81,13 +81,13 @@ export class HttpFileSource implements SourceWrapper<SourceType<"http">> {
 
 		this.etag = response.headers.get("etag");
 
-		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		const dir = join(config.sourceManager.getSourceDirectory(), this.id);
 		await writeFile(join(dir, "manifest.json"), JSON.stringify(manifest.get()));
 	}
 
 	public async remove() {
 		HttpFileSource.log.debug(`Removing source ${this.id}`);
-		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		const dir = join(config.sourceManager.getSourceDirectory(), this.id);
 		await rm(dir, { recursive: true, force: true });
 	}
 

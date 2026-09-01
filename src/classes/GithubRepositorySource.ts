@@ -139,7 +139,7 @@ export class GithubRepositorySource
 	}
 
 	public async init() {
-		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		const dir = join(config.sourceManager.getSourceDirectory(), this.id);
 		await mkdir(dir, {
 			recursive: true,
 		});
@@ -230,7 +230,7 @@ export class GithubRepositorySource
 			throw new IzumiError("Manifest not found in repository");
 		}
 
-		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		const dir = join(config.sourceManager.getSourceDirectory(), this.id);
 		let manifest: ManifestWrapper;
 
 		if (fileHash["manifest.json"] === this.files["manifest.json"]) {
@@ -300,7 +300,7 @@ export class GithubRepositorySource
 	}
 
 	public async remove() {
-		const dir = join(config.sourceManager.getSourceStore(), this.id);
+		const dir = join(config.sourceManager.getSourceDirectory(), this.id);
 		await rm(dir, { recursive: true, force: true });
 	}
 
